@@ -1,0 +1,18 @@
+# Render Blueprint: New -> Blueprint -> pick this repo.
+services:
+  - type: web
+    name: brickbloom
+    runtime: node
+    plan: free
+    region: frankfurt          # closest Render region to Lebanon
+    buildCommand: npm ci --omit=dev
+    startCommand: node src/server.js
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: OWNER_USERNAME
+        sync: false            # Render asks you for this: type your in-game name, e.g. Omar
+      - key: NODE_VERSION
+        value: "20"
+      - key: DB_PATH
+        value: /tmp/brickbloom/brickbloom.db   # free plan has no disk; on a paid plan add a disk and use /var/data/brickbloom.db

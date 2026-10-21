@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Brickbloom</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#7c5cff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><link rel="stylesheet" href="style.css"></head><body>
+<canvas id="c"></canvas>
+<div id="login" class="panel center">
+  <h1><span class="logo">▦</span> Brickbloom</h1><p class="sub">Build • Farm • Trade • Play with friends</p>
+  <input id="lu" placeholder="Username" maxlength="16" autocomplete="username">
+  <input id="lp" placeholder="Password" type="password" maxlength="72" autocomplete="current-password">
+  <input id="lw" placeholder="World (e.g. START)" maxlength="16">
+  <div class="row"><button id="bLogin">Log in</button><button id="bReg" class="alt">Create account</button></div>
+  <p id="lerr" class="err"></p>
+</div>
+<div id="hud" class="hidden">
+  <div id="top"><span id="wname"></span><span id="gems"></span><span id="lvl"></span></div>
+  <div id="menu">
+    <button data-p="inv">🎒</button><button data-p="shop">🛒</button><button data-p="quests">📜</button>
+    <button data-p="worlds">🌍</button><button data-p="trade">🤝</button><button data-p="friends" id="bFriends">👥</button><button data-p="clinic">🩹</button>
+    <button data-p="carnival">🎪</button><button data-p="legend">🌟</button><button id="bSound">🎵</button><button data-p="owner" id="bOwner" class="hidden">👑</button>
+  </div>
+  <div id="timer" class="hidden"></div>
+  <div id="chat"><button id="chatToggle">💬</button><div id="log"></div><input id="say" placeholder="Chat or /help" maxlength="200"></div>
+  <div id="hotbar"></div>
+  <div id="touch">
+    <div class="dpad"><button id="tL">◀</button><button id="tR">▶</button></div>
+    <div class="acts"><button id="tMode">⛏</button><button id="tJ">⤒</button></div>
+  </div>
+  <div id="toast"></div>
+</div>
+<div id="modal" class="panel hidden"><button id="close">✕</button><div id="mbody"></div></div>
+<script src="sfx.js"></script><script src="game.js"></script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>
