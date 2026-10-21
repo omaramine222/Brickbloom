@@ -10,3 +10,4 @@ server.log
 .env.*
 screenshots/
 .DS_Store
+!.env.example
