@@ -50,3 +50,21 @@ test('render.yaml + .gitignore are deploy-safe', () => {
   const g = fs.readFileSync(path.join(__dirname, '..', '.gitignore'), 'utf8');
   for (const k of ['node_modules', 'data/', '.env', '*.db']) assert.ok(g.includes(k), k);
 });
+test('v5 over the wire: daily reward, leaders, trade log owner-only scope, stats', async () => {
+  srv = spawn('node', ['src/server.js'], { env: { ...process.env, PORT, DB_PATH: DB, DATA_DIR: '', OWNER_USERNAME: 'Omar' }, stdio: 'ignore' });
+  for (let k = 0; k < 50; k++) { try { await fetch(BASE + '/healthz'); break; } catch { await sleep(100); } }
+  const o = await api('login', 'Omar', '10.0.1.1'), a = await api('register', 'tra', '10.0.1.2'), b = await api('register', 'trb', '10.0.1.3');
+  const co = await client(o.token), ca = await client(a.token), cb = await client(b.token);
+  const last = (c, t) => [...c.msgs].reverse().find(m => m.t === t);
+  ca.send({ t: 'daily' }); await sleep(200); assert.equal(last(ca, 'me').gems, 20); ca.send({ t: 'daily' }); await sleep(200); assert.equal(last(ca, 'me').gems, 20);
+  co.send({ t: 'admin', cmd: 'give', args: ['tra', '7', '3'] }); await sleep(200);
+  ca.send({ t: 'trade_req', name: 'trb' }); await sleep(150); cb.send({ t: 'trade_accept', name: 'tra' }); await sleep(150);
+  ca.send({ t: 'trade_offer', items: [[7, 2]], gems: 5 }); await sleep(100); ca.send({ t: 'trade_ready' }); cb.send({ t: 'trade_ready' }); await sleep(150);
+  ca.send({ t: 'trade_confirm' }); cb.send({ t: 'trade_confirm' }); await sleep(300);
+  co.send({ t: 'tradelog' }); cb.send({ t: 'tradelog' }); ca.send({ t: 'leaders' }); await sleep(300);
+  const ol = last(co, 'tradelog'); assert.equal(ol.all, true); assert.ok(ol.list.some(r => r.a === 'tra' && r.b === 'trb' && r.offers.a.gems === 5));
+  const bl = last(cb, 'tradelog'); assert.equal(bl.all, false); assert.ok(bl.list.every(r => r.a === 'trb' || r.b === 'trb' || r.buyer === 'trb' || r.seller === 'trb'));
+  assert.ok(last(ca, 'leaders').rich.some(x => x.name === 'trb'));
+  ca.send({ t: 'join', name: 'FARMTRA' }); await sleep(250); assert.equal(last(ca, 'world').name, 'FARMTRA');
+  [co, ca, cb].forEach(c => c.ws.close()); srv.kill();
+});

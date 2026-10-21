@@ -64,7 +64,7 @@ const bcastWorld = (name, m, except) => { for (const [ws] of inWorld(name)) if (
 const bcastAll = m => { for (const [ws] of players) send(ws, m); };
 const findPlayer = name => [...players.entries()].find(([, p]) => p.user.username.toLowerCase() === String(name || '').toLowerCase());
 const pubPlayer = p => ({ equip: p.user.equip || {}, id: p.id, name: p.user.username, role: p.user.role, x: p.x, y: p.y, face: p.face || 1, level: E.levelFor(p.user.xp) });
-const me = p => ({ t: 'me', hl: p.user.hl || null, legend: E.legendView(p.user), equip: p.user.equip || {}, username: p.user.username, role: p.user.role, gems: p.user.gems, inv: p.user.inv, xp: p.user.xp || 0, level: E.levelFor(p.user.xp), quests: E.quests(p.user), clinic: E.clinicView(p.user) || null });
+const me = p => ({ t: 'me', daily: X.dailyView(p.user), hl: p.user.hl || null, legend: E.legendView(p.user), equip: p.user.equip || {}, username: p.user.username, role: p.user.role, gems: p.user.gems, inv: p.user.inv, xp: p.user.xp || 0, level: E.levelFor(p.user.xp), quests: E.quests(p.user), clinic: E.clinicView(p.user) || null });
 const touch = p => { store.saveUsers(p.user.username.toLowerCase()); send(p.ws, me(p)); };
 const sys = (ws, text, kind = 'sys') => send(ws, { t: 'chat', from: '', text, kind });
 let nextPid = 1;
@@ -90,8 +90,8 @@ function joinWorld(ws, p, name) {
   sys(ws, `Welcome to ${name}${w.owner ? ' (sealed by ' + w.owner + ')' : ''}`);
 }
 function leaveWorld(ws, p) { cancelTrade(p, 'left'); bcastWorld(p.world, { t: 'pleave', id: p.id }, ws); p.world = null; }
-const C = require('./courses');
-const genAny = n => C.COURSES[n] ? C.buildCourse(n) : G.PARKOUR.test(n) ? G.generateParkour(n) : G.generateWorld(n);
+const C = require('./courses'), X = require('./extras');
+const genAny = n => C.COURSES[n] ? C.buildCourse(n) : X.FARM.test(n) ? X.generateFarm(n) : G.PARKOUR.test(n) ? G.generateParkour(n) : G.generateWorld(n);
 const W = p => store.getWorld(p.world, genAny);
 
 // ---- movement validation ----
@@ -237,6 +237,9 @@ function handle(ws, p, m) {
       send(tp[0], { t: 'pm', from: u.username, role: u.role, text }); send(ws, { t: 'pm', to: tp[1].user.username, text });
       E.log('pm', { from: u.username, to: tp[1].user.username }); return;
     }
+    case 'daily': { const r = X.claimDaily(u); if (!r.ok) return sys(ws, 'Daily reward already claimed. Come back tomorrow!'); sys(ws, `🎁 Day ${r.streak} reward: +${r.gems} gems` + (r.crate ? ' and a Mystery Crate!' : ''), 'good'); send(ws, { t: 'dailyok', ...r }); return touch(p); }
+    case 'leaders': return send(ws, { t: 'leaders', ...X.leaders(users) });
+    case 'tradelog': { if (!allow('tl:' + u.username, 20)) return; return send(ws, { t: 'tradelog', all: G.hasRole(u, 'owner'), list: X.tradeHistory(store.tradeLogs(G.hasRole(u, 'owner') ? 300 : 2000), u) }); }
     case 'admin': return adminCmd(ws, p, m.cmd, m.args);
     case 'logs': if (!G.hasRole(u, 'owner')) return sys(ws, 'Owner only'); return send(ws, { t: 'logs', logs: (m.filter ? E.recentLogs(150, String(m.filter).slice(0, 30)) : store.logs(150)) });
     case 'setprice': { const r = E.setMarketPrice(u, m.id | 0, +m.price); if (r.ok) send(ws, { t: 'prices', market: E.market }); return sys(ws, r.ok ? `Price of ${I.itemName(m.id | 0)} set to ${m.price | 0}` : 'Failed: ' + r.err); }

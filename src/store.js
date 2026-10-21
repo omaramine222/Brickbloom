@@ -32,6 +32,7 @@ const q = {
   getKv: db.prepare('SELECT v FROM kv WHERE k=?'), putKv: db.prepare('INSERT OR REPLACE INTO kv VALUES (?,?)'),
   log: db.prepare('INSERT INTO logs (t,type,data) VALUES (?,?,?)'),
   logs: db.prepare('SELECT t,type,data FROM logs ORDER BY id DESC LIMIT ?'),
+  logsType: db.prepare("SELECT t,type,data FROM logs WHERE type IN ('trade','vend_buy') ORDER BY id DESC LIMIT ?"),
 };
 const dirtyUsers = new Set(), worlds = new Map(), dirtyWorlds = new Set();
 const SESSION_MS = 30 * 86400000;
@@ -55,5 +56,6 @@ module.exports = {
   kvGet(k, d) { const r = q.getKv.get(k); return r ? JSON.parse(r.v) : d; },
   kvSet(k, v) { q.putKv.run(k, JSON.stringify(v)); },
   log(e) { const { t, type, ...rest } = e; q.log.run(t, type, JSON.stringify(rest)); },
+  tradeLogs(n) { return q.logsType.all(n).map(r => ({ t: r.t, type: r.type, ...JSON.parse(r.data) })).reverse(); },
   logs(n) { return q.logs.all(n).map(r => ({ t: r.t, type: r.type, ...JSON.parse(r.data) })).reverse(); },
 };

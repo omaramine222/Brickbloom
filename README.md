@@ -8,7 +8,7 @@ All names, art (procedurally drawn pixel art in `public/game.js`), items and cod
 npm install
 OWNER_USERNAME=Omar PORT=3000 ./run.sh     # auto-restart loop, logs in server.log
 # or: OWNER_USERNAME=Omar npm start
-npm test                                   # 35 tests (logic, SQLite restart, live websocket test)
+npm test                                   # 40 tests (logic, SQLite restart, live websocket test)
 ```
 Open http://localhost:3000 and **register the owner username first** (the account whose name equals `OWNER_USERNAME` becomes owner).
 Promote/demote later in-game (`/setrole name mod|admin|user`) or offline: `node scripts/set-role.js name admin`.
@@ -72,6 +72,13 @@ Railway: New project → Deploy from GitHub → add variable `OWNER_USERNAME`, a
 1. Create an Always Free Ubuntu VM, open port 3000 in the VCN security list and `sudo iptables -I INPUT -p tcp --dport 3000 -j ACCEPT`.
 2. `sudo apt install -y nodejs npm git && git clone <your repo> && cd brickbloom && npm install --omit=dev`
 3. `OWNER_USERNAME=Omar nohup ./run.sh &` → share `http://<VM public IP>:3000`.
+
+## v5 changes (new look + more game)
+- **Brand-new art, all drawn by code** (`public/art.js`): shaded/outlined blocks with highlights and textures (dirt, grass caps, cobblestone, magma, wood, bricks, tiles, ores with gems, glass, lanterns, banners, crystals, seals), seeds as plump beans, trees with 3 growth stages + swaying + fruit, cute big-head characters with blinking eyes, walk/jump/punch animations and skins that really change the look (crown, fez, beanie, shades, hoodie, jacket, robe, sash, auras). Parallax clouds and hills, glowing sun/moon, twinkling stars, chunky outlined block-break particles, gem sparkles and drop shadows.
+- **Candy UI**: Fredoka font (bundled, SIL Open Font License in `public/fonts/OFL.txt`), rounded 3D buttons, pill HUD, new logo + login screen, round phone buttons.
+- **🎁 Daily login reward** with a 7-day streak (20→120 gems, day 7 adds a Mystery Crate).
+- **🏆 Stats panel**: top levels, richest players (staff not ranked), searchable **price guide for every item**, and **trade history** — players see their own trades/Barter Box sales; the owner sees **every** trade in the game (also from 👑 → "🤝 All trades").
+- **🌱 FARM worlds** (any world named FARM…, e.g. FARMOMAR; button in 🌍): long dirt shelves for planting big rows of trees.
 
 ## v4 changes (deploy + mobile polish)
 - `/healthz` endpoint, `DB_PATH` env, `PORT` env, listens on 0.0.0.0, data saved on shutdown (SIGTERM/SIGINT).

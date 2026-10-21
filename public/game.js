@@ -52,7 +52,7 @@ function makeTex(id) {
 }
 const TV = (id, v) => tex[id + '_' + v] || (tex[id + '_' + v] = ART.tex(+id, INFO, v));
 const T = id => tex[id] || (tex[id] = (window.ART ? ART.tex(+id, INFO) : makeTex(+id)));
-function icon(id, size = 32) { const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(T(id), 0, 0, size, size); return c; }
+function icon(id, size = 32) { const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(T(id), 0, 0, size, size); if (ART.SEAMLESS.has(+id)) { g.strokeStyle = '#2a1d3d'; g.lineWidth = size / 16; g.strokeRect(size / 32, size / 32, size - size / 16, size - size / 16); g.fillStyle = '#ffffff40'; g.fillRect(size / 16, size / 16, size - size / 8, size / 16); } return c; }
 const name = id => id >= INFO.seedOffset && id < 9000 ? INFO.items[id - INFO.seedOffset].name + ' Seed' : (INFO.items[id] || { name: '?' }).name;
 const rarity = id => (INFO.items[id >= INFO.seedOffset ? id - INFO.seedOffset : id] || {}).rarity || 'common';
 
@@ -100,13 +100,16 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity 
 function onMsg(m) {
   switch (m.t) {
     case 'autherr': localStorage.removeItem('bbTok'); location.reload(); break;
-    case 'me': if (ME && m.gems > ME.gems) SFX.play('gem'); if (ME && m.level > ME.level) { SFX.play('good'); window.FX && FX.levelUp(); } ME = m; $('gems').textContent = m.gems; $('lvl').textContent = 'Lv ' + m.level; $('bOwner').classList.toggle('hidden', !['owner', 'admin', 'mod'].includes(m.role)); refreshHotbar(); if (curPanel && !(curPanel === 'legend' && m.legend.quiz && B.querySelector('input[type=radio]:checked')) && !(curPanel === 'vend' && document.activeElement.tagName === 'INPUT')) panels[curPanel](); break;
+    case 'me': if (ME && m.gems > ME.gems) SFX.play('gem'); if (ME && m.level > ME.level) { SFX.play('good'); window.FX && FX.levelUp(); } ME = m; { const qb = document.querySelector('#menu [data-p=quests]'); if (qb) qb.classList.toggle('ping', !!(m.daily && m.daily.canClaim)); } $('gems').textContent = m.gems; $('lvl').textContent = 'Lv ' + m.level; $('bOwner').classList.toggle('hidden', !['owner', 'admin', 'mod'].includes(m.role)); refreshHotbar(); if (curPanel && !(curPanel === 'legend' && m.legend.quiz && B.querySelector('input[type=radio]:checked')) && !(curPanel === 'vend' && document.activeElement.tagName === 'INPUT')) panels[curPanel](); break;
     case 'world': WORLD = m; others.clear(); cracks = {}; const now = performance.now();
       for (const t of Object.values(m.trees)) t.at = now - t.age;
       m.players.forEach(p => p.name !== ME.username && others.set(p.id, { ...p, rx: p.x, ry: p.y }));
       pl.x = m.spawn.x; pl.y = m.spawn.y; pl.vx = pl.vy = 0; run = null; $('timer').classList.add('hidden');
       $('wname').textContent = m.name + (m.owner ? ' 🔒' + m.owner : '') + (m.parkour ? ' 🏃' : ''); localStorage.bbWorld = m.name; break;
     case 'tile': { const i = m.y * WORLD.w + m.x; const was = WORLD.fg[i] || WORLD.bg[i]; SFX.play(m.fg || (m.bg && !was) ? 'place' : 'break'); if (window.FX) FX.burst(m.x, m.y, INFO.items[WORLD.fg[i] || WORLD.bg[i]] ? INFO.items[WORLD.fg[i] || WORLD.bg[i]].color : '#fff', m.fg ? 4 : 12); WORLD.fg[i] = m.fg; WORLD.bg[i] = m.bg; delete cracks[i]; if (m.tree) WORLD.trees[i] = { at: performance.now(), grow: m.tree.grow }; else if (!(m.fg >= INFO.seedOffset)) delete WORLD.trees[i]; break; }
+    case 'leaders': leaders = m; if (curPanel === 'stats') panels.stats(); break;
+    case 'tradelog': tradelog = m; if (curPanel === 'stats') panels.stats(); break;
+    case 'dailyok': SFX.play('good'); window.FX && FX.confetti(); toast(`🎁 +${m.gems} gems!`); break;
     case 'crack': cracks[m.y * WORLD.w + m.x] = { p: m.p, t: performance.now() }; SFX.play('hit'); break;
     case 'drop': WORLD.drops = WORLD.drops.filter(d => d.id !== m.id); if (m.d) WORLD.drops.push(m.d); break;
     case 'pjoin': if (m.p.name !== ME.username) others.set(m.p.id, { ...(others.get(m.p.id) || {}), ...m.p, rx: m.p.x, ry: m.p.y }); else ME.equip = m.p.equip; break;
@@ -163,6 +166,7 @@ function itemGrid(filter, onPick, selId) {
     s.appendChild(icon(+id)); const b = document.createElement('b'); b.textContent = n; s.appendChild(b); s.onclick = () => onPick(+id); g.appendChild(s);
   }); return g;
 }
+let statsTab = 'leaders', leaders = null, tradelog = null;
 const panels = {
   inv() {
     const id = invPick, it = id && INFO.items[id >= INFO.seedOffset && id < 9000 ? id - INFO.seedOffset : id];
@@ -191,15 +195,32 @@ const panels = {
   },
   quests() {
     B.innerHTML = `<h2>Daily Quests</h2><p>Reset every day (UTC). Level ${ME.level} · ${ME.xp} XP</p>`;
+    if (ME.daily) { const dv = ME.daily, d = document.createElement('div'); d.className = 'card daily';
+      d.innerHTML = '<h3>🎁 Daily login reward</h3><div class="streak">' + dv.table.map((g, k) => `<span class="${k < (dv.canClaim ? dv.next - 1 : dv.streak) ? 'got' : ''} ${dv.canClaim && k === dv.next - 1 ? 'today' : ''}">Day ${k + 1}<b>${g}💎</b>${k === 6 ? '<i>+📦</i>' : ''}</span>`).join('') + '</div>';
+      const b = document.createElement('button'); b.className = dv.canClaim ? 'gold' : ''; b.disabled = !dv.canClaim; b.textContent = dv.canClaim ? `Claim day ${dv.next}: ${dv.table[dv.next - 1]} gems` : 'Claimed today ✅ come back tomorrow'; b.onclick = () => send({ t: 'daily' }); d.appendChild(b); B.appendChild(d); }
     ME.quests.forEach(q => { const d = document.createElement('div'); d.className = 'card'; d.innerHTML = `<b>${esc(q.text)}</b> — ${q.p}/${q.goal} · reward ${q.gems}💎 `; if (q.claimed) d.innerHTML += '✅'; else if (q.p >= q.goal) { const b = document.createElement('button'); b.textContent = 'Claim'; b.className = 'alt'; b.onclick = () => send({ t: 'quest', id: q.id }); d.appendChild(b); } B.appendChild(d); });
   },
+  stats(tab = statsTab) {
+    statsTab = tab; B.innerHTML = '<h2>📊 Brickbloom Stats</h2>'; const row = document.createElement('div'); row.className = 'row tabs';
+    [['leaders', '🏆 Leaders'], ['prices', '💰 Prices'], ['trades', '🤝 Trades']].forEach(([k, l]) => { const b = document.createElement('button'); b.textContent = l; b.className = k === tab ? 'gold' : ''; b.onclick = () => { if (k === 'leaders') send({ t: 'leaders' }); if (k === 'trades') send({ t: 'tradelog' }); panels.stats(k); }; row.appendChild(b); }); B.appendChild(row);
+    if (tab === 'leaders') { if (!leaders) { send({ t: 'leaders' }); B.insertAdjacentHTML('beforeend', '<p>Loading…</p>'); return; }
+      const medal = k => ['🥇', '🥈', '🥉'][k] || (k + 1) + '.';
+      B.insertAdjacentHTML('beforeend', '<div class="two"><div class="card"><h3>⭐ Top levels</h3>' + leaders.level.map((x, k) => `<div class="lb">${medal(k)} <b>${esc(x.name)}</b><span>Lv ${x.level}</span></div>`).join('') + '</div><div class="card"><h3>💎 Richest players</h3>' + (leaders.rich.map((x, k) => `<div class="lb">${medal(k)} <b>${esc(x.name)}</b><span>${x.gems}💎</span></div>`).join('') || '<p>No players yet</p>') + '<small>Staff are not ranked here.</small></div></div>'); }
+    if (tab === 'prices') { B.insertAdjacentHTML('beforeend', '<input id="pq" placeholder="Search items…">'); const g = document.createElement('div'); g.className = 'pricelist'; B.appendChild(g);
+      const draw = () => { const q = ($('pq').value || '').toLowerCase(); g.innerHTML = ''; Object.entries(INFO.items).filter(([, it]) => it.kind !== 'gemdrop' && it.name.toLowerCase().includes(q)).sort((a, b) => b[1].value - a[1].value).slice(0, 120).forEach(([id, it]) => { const d = document.createElement('div'); d.className = 'pl r-' + it.rarity; d.appendChild(icon(+id)); d.insertAdjacentHTML('beforeend', `<b>${esc(it.name)}</b><i>${it.rarity}</i><span>${it.value}💎</span>`); g.appendChild(d); }); };
+      $('pq').oninput = draw; draw(); }
+    if (tab === 'trades') { if (!tradelog) { send({ t: 'tradelog' }); B.insertAdjacentHTML('beforeend', '<p>Loading…</p>'); return; }
+      B.insertAdjacentHTML('beforeend', `<p>${tradelog.all ? '👑 Every trade and Barter Box sale in the game (owner view).' : 'Your trades and Barter Box sales.'}</p>`);
+      const off = o => (o.items || []).map(([id, n]) => `${n}× ${esc(name(id))}`).concat(o.gems ? [o.gems + '💎'] : []).join(', ') || 'nothing';
+      B.insertAdjacentHTML('beforeend', tradelog.list.length ? tradelog.list.map(r => `<div class="card tl"><small>${new Date(r.t).toLocaleString()}</small>` + (r.kind === 'trade' ? `<div>🤝 <b>${esc(r.a)}</b> gave ${off(r.offers.a)}</div><div>↔ <b>${esc(r.b)}</b> gave ${off(r.offers.b)}</div>` : `<div>🏪 <b>${esc(r.buyer)}</b> bought ${r.qty}× ${esc(name(r.item))} from <b>${esc(r.seller)}</b> for ${r.cost}💎 in ${esc(r.w)}</div>`) + '</div>').join('') : '<p>No trades yet.</p>'); }
+  },
   worlds() {
-    B.innerHTML = `<h2>Travel</h2><input id="wgo" maxlength="16" placeholder="WORLD NAME"><div class="row"><button id="bgo">Go</button><button id="brun" class="alt">🏃 Random RUN</button><button id="bstart">START</button></div>
+    B.innerHTML = `<h2>Travel</h2><input id="wgo" maxlength="16" placeholder="WORLD NAME"><div class="row"><button id="bgo">Go</button><button id="brun" class="alt">🏃 Random RUN</button><button id="bstart">START</button><button id="bfarm" class="gold">🌱 My FARM</button></div>
     <p>Seal a world with a <b>Keystone Seal</b> (shop). Then <code>/access name</code> lets friends build.</p>`;
     $('bgo').onclick = () => { send({ t: 'join', name: $('wgo').value }); closeModal(); };
     const cr = document.createElement('div'); cr.className = 'row'; B.appendChild(cr);
     Object.entries(INFO.courses).forEach(([k, c]) => { const b = document.createElement('button'); b.className = 'alt'; b.textContent = `🏁 ${c.name} (${c.limit / 1000}s, +${c.prize}💎)`; b.onclick = () => { send({ t: 'join', name: k }); closeModal(); }; cr.appendChild(b); });
-    $('brun').onclick = () => { send({ t: 'join', name: 'RUN' }); closeModal(); }; $('bstart').onclick = () => { send({ t: 'join', name: 'START' }); closeModal(); };
+    $('brun').onclick = () => { send({ t: 'join', name: 'RUN' }); closeModal(); }; $('bstart').onclick = () => { send({ t: 'join', name: 'START' }); closeModal(); }; $('bfarm').onclick = () => { send({ t: 'join', name: ('FARM' + ME.username.toUpperCase().replace(/[^A-Z0-9]/g, '')).slice(0, 16) }); closeModal(); };
     if (run && run.board) B.insertAdjacentHTML('beforeend', '<h3>Leaderboard</h3><table>' + run.board.map((e, k) => `<tr><td>${k + 1}</td><td>${esc(e.name)}</td><td>${(e.ms / 1000).toFixed(2)}s</td></tr>`).join('') + '</table><button onclick="">Restart run</button>');
     const rb = B.querySelector('button[onclick]'); if (rb) { rb.removeAttribute('onclick'); rb.onclick = () => { send({ t: 'restart' }); closeModal(); }; }
   },
@@ -339,7 +360,7 @@ const panels = {
       const r2 = document.createElement('div'); r2.className = 'row';
       const mk = (t, f) => { const b = document.createElement('button'); b.textContent = t; b.onclick = f; r2.appendChild(b); };
       mk('🎪 Start carnival', () => send({ t: 'carnival', on: true })); mk('Stop carnival', () => send({ t: 'carnival', on: false })); mk('Carnival: schedule', () => send({ t: 'carnival', on: null }));
-      mk('💲 Price editor', () => { send({ t: 'prices' }); openModal('prices'); }); mk('📒 Economy logs', () => send({ t: 'logs', filter: T_() }));
+      mk('💲 Price editor', () => { send({ t: 'prices' }); openModal('prices'); }); mk('🤝 All trades', () => { tradelog = null; send({ t: 'tradelog' }); openModal('stats', 'trades'); }); mk('📒 Economy logs', () => send({ t: 'logs', filter: T_() }));
       B.appendChild(r2);
       if (logs.length) B.insertAdjacentHTML('beforeend', '<table>' + logs.slice().reverse().map(l => `<tr><td>${new Date(l.t).toLocaleTimeString()}</td><td>${esc(l.type)}</td><td>${esc(JSON.stringify(Object.fromEntries(Object.entries(l).filter(([k]) => !['t', 'type'].includes(k)))).slice(0, 120))}</td></tr>`).join('') + '</table>');
     }
