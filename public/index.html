@@ -1,7 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Brickbloom</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#7c5cff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><link rel="preload" href="fonts/fredoka-700.ttf" as="font" crossorigin><link rel="stylesheet" href="style.css"></head><body>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Brickbloom</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#7c5cff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><link rel="preload" href="fonts/fredoka-700.ttf" as="font" crossorigin><link rel="stylesheet" href="style.css?v=6"></head><body>
 <canvas id="c"></canvas>
+<div id="loader"><img src="logo.svg" alt=""><div class="bar"><i></i></div><p id="lmsg">Loading…</p></div>
+<div id="rotate" class="hidden"><b>↻</b> Turn your phone sideways for the best view <button id="rotGo">Go landscape</button><button id="rotX" aria-label="Dismiss">✕</button></div>
 <div id="login" class="panel center">
   <img class="logoimg" src="logo.svg" alt=""><h1>Brick<b>bloom</b></h1><p class="sub">Build • Farm • Trade • Play with friends</p>
   <input id="lu" placeholder="Username" maxlength="16" autocomplete="username">
@@ -13,18 +15,16 @@
 <div id="hud" class="hidden">
   <div id="top"><span id="wname"></span><span id="gems"></span><span id="lvl"></span></div>
   <div id="menu">
-    <button data-p="inv">🎒</button><button data-p="shop">🛒</button><button data-p="quests">📜</button>
-    <button data-p="worlds">🌍</button><button data-p="trade">🤝</button><button data-p="friends" id="bFriends">👥</button><button data-p="clinic">🩹</button>
-    <button data-p="carnival">🎪</button><button data-p="legend">🌟</button><button data-p="stats">🏆</button><button id="bSound">🎵</button><button data-p="owner" id="bOwner" class="hidden">👑</button>
+    <button data-p="inv" aria-label="Backpack">🎒</button><button data-p="shop" aria-label="Shop">🛒</button><button data-p="worlds" aria-label="Worlds">🌍</button><button data-p="owner" id="bOwner" class="hidden" aria-label="Owner">👑</button><button data-p="more" id="bMore" aria-label="Menu">☰</button>
   </div>
   <div id="timer" class="hidden"></div>
-  <div id="chat"><button id="chatToggle">💬</button><div id="log"></div><input id="say" placeholder="Chat or /help" maxlength="200"></div>
+  <div id="chat" class="min"><button id="chatToggle" aria-label="Chat">💬</button><div id="log"></div><input id="say" placeholder="Chat or /help" maxlength="200"></div>
   <div id="hotbar"></div>
   <div id="touch">
-    <div class="dpad"><button id="tL">◀</button><button id="tR">▶</button></div>
-    <div class="acts"><button id="tMode">⛏</button><button id="tJ">⤒</button></div>
+    <div class="dpad" id="dpad"><button id="tL" aria-label="Left"><i class="arr l"></i></button><button id="tR" aria-label="Right"><i class="arr r"></i></button></div>
+    <div class="acts"><button id="tJ" aria-label="Jump"><i class="arr u"></i></button></div>
   </div>
   <div id="toast"></div>
 </div>
 <div id="modal" class="panel hidden"><button id="close">✕</button><div id="mbody"></div></div>
-<script src="art.js"></script><script src="sfx.js"></script><script src="game.js"></script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>
+<script src="art.js?v=6"></script><script src="sfx.js?v=6"></script><script src="game.js?v=6"></script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>

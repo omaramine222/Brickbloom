@@ -53,8 +53,8 @@ function tex(id, INFO, v = 0) {
   switch (id) {
     case 1: { // loam (dirt)
       px(g, 0, 0, S, S, '#8d5c35');
-      for (let k = 0; k < 14; k++) { const x = r() * 24 + 4, y = r() * 24 + 4; g.fillStyle = r() < .5 ? '#6b4224' : '#a8743f'; g.beginPath(); g.ellipse(x, y, 2 + r() * 1.5, 1.5, 0, 0, 7); g.fill(); }
-      for (let k = 0; k < 3; k++) { const x = r() * 22 + 5, y = r() * 22 + 5; px(g, x, y, 3, 2, '#b8b2a8'); px(g, x, y + 2, 3, 1, '#7a746c'); }
+      for (let k = 0; k < 8; k++) { const x = (r() * 26 + 3) | 0, y = (r() * 26 + 3) | 0, w = 2 + (r() * 2 | 0); px(g, x, y, w, 2, r() < .6 ? '#74482a' : '#a06c3e'); }
+      if (r() < 0.6) { const x = (r() * 22 + 5) | 0, y = (r() * 22 + 5) | 0; px(g, x, y, 3, 2, '#a59d93'); px(g, x, y + 2, 3, 1, '#6e665e'); }
       return c; }
     case 2: case 4: { // slatestone / corebed: cobble rocks
       const base = id === 4 ? '#2b2433' : '#7b7f8c'; px(g, 0, 0, S, S, sh(base, -0.35));
@@ -135,11 +135,11 @@ function skinTone(name) { const h = name.split('').reduce((a, c) => a * 31 + c.c
 // x,y = screen top-left of hitbox, w,h hitbox size. st: {face, t, moving, air, vy, punch}
 function player(ctx, X, Y, W, H, nm, eq, st, INFO) {
   const P = skinTone(nm), t = st.t, u = H / 30; eq = eq || {};
-  const walk = st.moving && !st.air ? Math.sin(t / 75) : 0, bob = st.moving && !st.air ? Math.abs(Math.cos(t / 75)) * 1.6 * u : Math.sin(t / 450) * .6 * u;
+  const walk = st.walk !== undefined ? st.walk : st.moving && !st.air ? Math.sin(t / 75) : 0, bob = st.bob !== undefined ? st.bob * u : st.moving && !st.air ? Math.abs(Math.cos(t / 75)) * 1.6 * u : Math.sin(t / 450) * .6 * u;
   ctx.save(); ctx.translate(X + W / 2, Y + H); ctx.scale(st.face < 0 ? -1 : 1, 1);
   // shadow
   if (!st.air) { ctx.fillStyle = '#0003'; ctx.beginPath(); ctx.ellipse(0, 0, W * .5, 3 * u, 0, 0, 7); ctx.fill(); }
-  if (eq.aura) { const ac = INFO.items[eq.aura].color; const gr = ctx.createRadialGradient(0, -H * .55, 2, 0, -H * .55, H * .85); gr.addColorStop(0, ac + 'aa'); gr.addColorStop(1, ac + '00'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, -H * .55, H * .85, 0, 7); ctx.fill();
+  if (eq.aura && !st.noAura) { const ac = INFO.items[eq.aura].color; const gr = ctx.createRadialGradient(0, -H * .55, 2, 0, -H * .55, H * .85); gr.addColorStop(0, ac + 'aa'); gr.addColorStop(1, ac + '00'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, -H * .55, H * .85, 0, 7); ctx.fill();
     for (let k = 0; k < 4; k++) { const a = t / 400 + k * 1.57; ctx.fillStyle = '#fff'; ctx.globalAlpha = .7; ctx.fillRect(Math.cos(a) * H * .5, -H * .55 + Math.sin(a) * H * .45, 2 * u, 2 * u); } ctx.globalAlpha = 1; }
   ctx.lineJoin = 'round'; ctx.lineWidth = 1.7 * u; ctx.strokeStyle = OUT;
   const shirt = eq.shirt ? INFO.items[eq.shirt].color : P.body;
@@ -162,7 +162,7 @@ function player(ctx, X, Y, W, H, nm, eq, st, INFO) {
   // hair
   if (!eq.hat || eq.hat === 43) { ctx.beginPath(); ctx.moveTo(-hr * 1.05, hy - hr * .05); ctx.quadraticCurveTo(-hr * 1.1, hy - hr * 1.15, 0, hy - hr * 1.05); ctx.quadraticCurveTo(hr * 1.15, hy - hr * 1.1, hr * 1.05, hy - hr * .1); ctx.quadraticCurveTo(hr * .5, hy - hr * .55, -hr * .1, hy - hr * .45); ctx.quadraticCurveTo(-hr * .6, hy - hr * .35, -hr * 1.05, hy - hr * .05); ctx.fillStyle = P.hair; ctx.fill(); ctx.stroke(); }
   // eyes
-  const blink = (t % 3800) < 120; const ex = hr * .28;
+  const blink = st.blink !== undefined ? st.blink : (t % 3800) < 120; const ex = hr * .28;
   for (const s of [0, 1]) { const x = ex + (s ? hr * .5 : -hr * .25) - hr * .1, y = hy + hr * .05;
     if (blink) { ctx.fillStyle = OUT; ctx.fillRect(x - 2 * u, y, 4 * u, 1.2 * u); continue; }
     ctx.fillStyle = OUT; ctx.beginPath(); ctx.ellipse(x, y, 2.1 * u, 2.9 * u, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + .6 * u, y - 1.1 * u, .95 * u, 0, 7); ctx.fill(); }
@@ -242,5 +242,40 @@ function edges(ctx, sx, sy, TS, airUp, airDown, airL, airR) {
 }
 // sparkle shape
 function sparkle(ctx, x, y, s, a) { ctx.globalAlpha = a; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(x, y - s); ctx.lineTo(x + s * .25, y - s * .25); ctx.lineTo(x + s, y); ctx.lineTo(x + s * .25, y + s * .25); ctx.lineTo(x, y + s); ctx.lineTo(x - s * .25, y + s * .25); ctx.lineTo(x - s, y); ctx.lineTo(x - s * .25, y - s * .25); ctx.fill(); ctx.globalAlpha = 1; }
-window.ART = { SEAMLESS, tex, player, sky, tree, grassCap, edges, sparkle, star, gem, OUT, sh };
+// ---------- v6: cohesive palette + crisp pixelization ----------
+const PAL = (() => {
+  const h2r = (h, s, l) => { h = ((h % 360) + 360) % 360 / 360; const q = l < .5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q; const f = t => { t = (t + 1) % 1; return t < 1 / 6 ? p + (q - p) * 6 * t : t < .5 ? q : t < 2 / 3 ? p + (q - p) * (2 / 3 - t) * 6 : p; }; return [f(h + 1 / 3), f(h), f(h - 1 / 3)].map(v => Math.round(v * 255)); };
+  const out = [[42, 29, 61], [255, 255, 255], [255, 248, 231]];
+  const L = [.14, .24, .34, .45, .56, .67, .78, .88];
+  const shift = (h, k) => { const toward = k < 3.5 ? 255 : 55; const amt = Math.abs(k - 3.5) * 5; let d = ((toward - h + 540) % 360) - 180; return h + Math.sign(d) * Math.min(Math.abs(d), amt); };
+  for (const h of [0, 12, 22, 29, 36, 44, 54, 70, 95, 125, 150, 170, 188, 202, 216, 232, 255, 278, 300, 322, 342])
+    L.forEach((l, k) => { const hs = shift(h, k); out.push(h2r(hs, [.5, .6, .7, .75, .75, .75, .72, .7][k], l)); out.push(h2r(hs, [.38, .44, .48, .5, .5, .5, .52, .55][k], l)); out.push(h2r(hs, [.22, .26, .28, .3, .3, .3, .34, .4][k], l)); });
+  for (const l of [.1, .2, .32, .44, .56, .68, .8, .92]) out.push(h2r(250, .12, l));
+  return out;
+})();
+const NC = new Map();
+function nearest(r, g, b) { const key = (r >> 2) << 12 | (g >> 2) << 6 | (b >> 2); let v = NC.get(key); if (v) return v; let best = 1e9; for (const c of PAL) { const dr = r - c[0], dg = g - c[1], db = b - c[2], d = dr * dr * .3 + dg * dg * .59 + db * db * .11; if (d < best) { best = d; v = c; } } NC.set(key, v); return v; }
+function pixelize(c, outline) {
+  const g = c.getContext('2d'), W = c.width, H = c.height, im = g.getImageData(0, 0, W, H), d = im.data;
+  for (let i = 0; i < d.length; i += 4) { if (d[i + 3] < 120) { d[i + 3] = 0; continue; } const a = d[i + 3] / 255, n = nearest(d[i] / a | 0, d[i + 1] / a | 0, d[i + 2] / a | 0); d[i] = n[0]; d[i + 1] = n[1]; d[i + 2] = n[2]; d[i + 3] = 255; }
+  if (outline) { const src = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) src[i] = d[i * 4 + 3] ? 1 : 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (src[i]) continue; if ((x > 0 && src[i - 1]) || (x < W - 1 && src[i + 1]) || (y > 0 && src[i - W]) || (y < H - 1 && src[i + W])) { d[i * 4] = 42; d[i * 4 + 1] = 29; d[i * 4 + 2] = 61; d[i * 4 + 3] = 255; } } }
+  g.putImageData(im, 0, 0); return c;
+}
+function ptex(id, INFO, v) { const c = tex(id, INFO, v), it = INFO.items[id]; const sprite = !it || !['fg', 'bg'].includes(it.kind) || id === 9; return pixelize(c, sprite && id !== 9); }
+// cached player sprites (pixelized), 40x72 texels; feet at (20, 70)
+const PS = new Map();
+function playerSprite(nm, eq, pose, INFO) {
+  eq = eq || {}; const key = nm + '|' + (eq.hat || 0) + '|' + (eq.shirt || 0) + '|' + pose; let c = PS.get(key); if (c) return c;
+  c = document.createElement("canvas"); c.width = 40; c.height = 72; const g = c.getContext('2d');
+  const [kind, f] = pose.split(':'), fr = +f || 0;
+  const st = { face: 1, t: 1000, moving: kind === 'walk', air: kind === 'jump' || kind === 'fall', vy: kind === 'jump' ? -1 : 1, punch: kind === 'punch' ? 1 - fr * .5 : 0, noAura: true,
+    walk: kind === 'walk' ? Math.sin(fr / 4 * Math.PI * 2) : 0, bob: kind === 'walk' ? Math.abs(Math.cos(fr / 4 * Math.PI * 2)) * 1.4 : kind === 'idle' ? fr * .7 : 0, blink: kind === 'idle' && fr === 2 };
+  player(g, 20 - 11, 70 - 46, 22, 46, nm, eq, st, INFO); pixelize(c, false);
+  if (PS.size > 400) PS.delete(PS.keys().next().value); PS.set(key, c); return c;
+}
+const TRS = new Map();
+function treeSprite(g, col) { const st = g >= 1 ? 3 : g >= 0.6 ? 2 : g >= 0.25 ? 1 : 0, key = st + col; let c = TRS.get(key); if (c) return c;
+  c = document.createElement('canvas'); c.width = 32; c.height = 48; const x = c.getContext('2d'); tree(x, 0, 16, 32, [0.1, 0.4, 0.8, 1][st], col, 0, 0); pixelize(c, true); TRS.set(key, c); return c; }
+window.ART = { treeSprite, PAL, pixelize, ptex, playerSprite, SEAMLESS, tex, player, sky, tree, grassCap, edges, sparkle, star, gem, OUT, sh };
 })();

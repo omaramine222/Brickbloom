@@ -1,6 +1,6 @@
 'use strict';
 const http = require('http'), path = require('path'), crypto = require('crypto');
-const express = require('express'), { WebSocketServer } = require('ws'), bcrypt = require('bcryptjs');
+const express = require('express'), compression = require('compression'), { WebSocketServer } = require('ws'), bcrypt = require('bcryptjs');
 const I = require('./items'), G = require('./game'), E = require('./economy'), store = require('./store');
 
 const PORT = +process.env.PORT || 3000;
@@ -11,9 +11,14 @@ E.setLogSink(store.log); Object.assign(E.market, store.kvGet('market', {})); E.o
 const app = express();
 app.set('trust proxy', 1); // Render/any proxy: real client IP for rate limits (friends on one Wi-Fi still each get own limits per IP header)
 const STARTED = Date.now();
-app.get(['/healthz', '/health'], (req, res) => res.json({ ok: true, uptime: Math.round((Date.now() - STARTED) / 1000), online: players.size }));
+app.get(['/healthz', '/health'], (req, res) => res.json({ ok: true, version: 6, uptime: Math.round((Date.now() - STARTED) / 1000), online: players.size }));
 app.use(express.json({ limit: '4kb' }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(compression());
+app.use(express.static(path.join(__dirname, '..', 'public'), { setHeaders(res, file) {
+  if (/(index\.html|sw\.js)$/.test(file)) res.setHeader('Cache-Control', 'no-cache');
+  else if (/\.(ttf|png|svg)$/.test(file)) res.setHeader('Cache-Control', 'public, max-age=604800');
+  else res.setHeader('Cache-Control', 'public, max-age=3600'); } }));
+app.get('/version', (req, res) => res.json({ version: 6 }));
 
 // ---- simple per-key rate limiter ----
 const buckets = new Map();
@@ -105,7 +110,7 @@ function handleMove(ws, p, m) {
   const x = +m.x, y = +m.y; if (!Number.isFinite(x) || !Number.isFinite(y)) return;
   const w = W(p), now = Date.now(), dt = Math.min(1, (now - p.lastMove) / 1000);
   const maxD = 22 * dt + 0.6;
-  if (Math.abs(x - p.x) > maxD || Math.abs(y - p.y) > maxD + 0.5 || !boxFree(w, x, y) || x < 0 || x > w.w - 1 || y < -2 || y > w.h) {
+  if (Math.abs(x - p.x) > maxD || Math.abs(y - p.y) > 26 * dt + 1.1 || !boxFree(w, x, y) || x < 0 || x > w.w - 1 || y < -2 || y > w.h) {
     p.strikes = (p.strikes || 0) + 1; return send(ws, { t: 'pos', x: p.x, y: p.y });
   }
   p.x = x; p.y = y; p.face = m.face === -1 ? -1 : 1; p.lastMove = now;
