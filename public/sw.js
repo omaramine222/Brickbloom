@@ -1,5 +1,5 @@
 // Network-first service worker: works offline for the shell, always fresh when online.
-const C = 'bb-v4', SHELL = ['/', '/index.html', '/style.css', '/game.js', '/sfx.js', '/manifest.json', '/icon.svg', '/icon-192.png'];
+const C = 'bb-v4a', SHELL = ['/', '/index.html', '/style.css', '/game.js', '/sfx.js', '/manifest.json', '/icon.svg', '/icon-192.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', e => {

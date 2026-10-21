@@ -68,3 +68,4 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:3px;borde
 }
 @media (pointer:coarse) and (max-height:420px){#touch button{width:62px;height:62px;font-size:24px}#menu{max-width:46vw}}
 @media (max-width:360px){#menu button{padding:5px 6px;font-size:14px}#top{font-size:13px}}
+@media (pointer:coarse) and (orientation:portrait){#menu{top:50px;right:6px;left:6px;max-width:none;justify-content:flex-start}#chat{top:152px}}
