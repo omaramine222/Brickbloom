@@ -11,3 +11,5 @@ server.log
 screenshots/
 .DS_Store
 !.env.example
+android-keys/
+dist/

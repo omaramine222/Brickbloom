@@ -1,0 +1,2 @@
+<resources><style name="Splash" parent="android:Theme.Material.NoActionBar.Fullscreen">
+<item name="android:windowBackground">@drawable/splash</item><item name="android:statusBarColor">#7ec8f2</item></style></resources>
