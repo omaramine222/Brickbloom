@@ -50,7 +50,7 @@ app.post('/api/login', async (req, res) => {
   res.json({ token: newToken(username.toLowerCase()), username: u.username });
 });
 app.get('/api/info', (req, res) => res.json({ courses: Object.fromEntries(Object.entries(C.COURSES).map(([k, c]) => [k, { name: c.name, limit: c.limit, prize: c.prize }])), shuffleCost: E.SHUFFLE_COST, hlCost: E.HL_COST,
-  items: Object.fromEntries(Object.entries(I.ITEMS).map(([id, it]) => [id, { name: it.name, kind: it.kind, color: it.color, rarity: it.rarity, value: E.priceOf(+id), form: it.form, light: !!it.light, hard: it.hard, clear: !!it.clear }])),
+  items: Object.fromEntries(Object.entries(I.ITEMS).map(([id, it]) => [id, { name: it.name, kind: it.kind, color: it.color, rarity: it.rarity, value: E.priceOf(+id), form: it.form, light: !!it.light, hard: it.hard, clear: !!it.clear, slot: it.slot }])),
   recipes: I.RECIPES, shop: I.SHOP, crate: E.crateRates(), wheel: E.wheelRates(), wheelCost: E.WHEEL_COST, seedOffset: I.SEED_OFFSET, gemDrop: I.GEM_DROP,
   symptoms: E.SYMPTOMS, carnival: E.carnivalActive(),
 }));

@@ -1,9 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Brickbloom</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#7c5cff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><link rel="stylesheet" href="style.css"></head><body>
+<title>Brickbloom</title><link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-192.png"><meta name="theme-color" content="#7c5cff"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><link rel="preload" href="fonts/fredoka-700.ttf" as="font" crossorigin><link rel="stylesheet" href="style.css"></head><body>
 <canvas id="c"></canvas>
 <div id="login" class="panel center">
-  <h1><span class="logo">▦</span> Brickbloom</h1><p class="sub">Build • Farm • Trade • Play with friends</p>
+  <img class="logoimg" src="logo.svg" alt=""><h1>Brick<b>bloom</b></h1><p class="sub">Build • Farm • Trade • Play with friends</p>
   <input id="lu" placeholder="Username" maxlength="16" autocomplete="username">
   <input id="lp" placeholder="Password" type="password" maxlength="72" autocomplete="current-password">
   <input id="lw" placeholder="World (e.g. START)" maxlength="16">
@@ -27,4 +27,4 @@
   <div id="toast"></div>
 </div>
 <div id="modal" class="panel hidden"><button id="close">✕</button><div id="mbody"></div></div>
-<script src="sfx.js"></script><script src="game.js"></script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>
+<script src="art.js"></script><script src="sfx.js"></script><script src="game.js"></script><script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script></body></html>
